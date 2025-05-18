@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\Public;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\RegisterAttendeeRequest;
 use App\Services\EventService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
@@ -13,21 +13,22 @@ class EventController extends Controller
 
     public function index(): JsonResponse
     {
-        $events = $this->eventService->getUpcomingPublicEvents();
-        return response()->json($events);
+        return $this->eventService->getUpcomingPublicEvents();
     }
 
     public function show(string $id): JsonResponse
     {
-        $event = $this->eventService->getPublicEvent($id);
-        return response()->json($event);
+        return $this->eventService->getPublicEvent($id);
     }
 
-    public function register(RegisterAttendeeRequest $request, string $id): JsonResponse
+    public function register(Request $request, string $id): JsonResponse
     {
-        $data = $request->validated();
-        $response = $this->eventService->registerAttendee($id, $data);
-        
-        return response()->json($response['data'], $response['status']);
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+        ]);
+
+        return $this->eventService->registerAttendee($id, $data);
     }
 }

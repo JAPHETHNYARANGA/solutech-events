@@ -3,40 +3,34 @@
 namespace App\Services;
 
 use App\Models\Admin;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 class AuthService
 {
-    public function login(array $credentials): array
+    public function login(array $credentials): JsonResponse
     {
         $admin = Admin::where('email', $credentials['email'])->first();
 
         if (!$admin || !Hash::check($credentials['password'], $admin->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+            return response()->json([
+                'message' => 'Invalid credentials'
+            ], 401);
         }
 
         $token = $admin->createToken('auth_token')->plainTextToken;
 
-        return [
-            'status' => 200,
-            'data' => [
-                'token' => $token,
-                'admin' => $admin
-            ]
-        ];
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'admin' => $admin
+        ]);
     }
 
-    public function logout(): array
+    public function logout(): JsonResponse
     {
-        Auth::user()->tokens()->delete();
-        
-        return [
-            'status' => 200,
-            'data' => ['message' => 'Logged out successfully']
-        ];
+        // Auth::user()->tokens()->delete();
+        return response()->json(['message' => 'Successfully logged out']);
     }
 }

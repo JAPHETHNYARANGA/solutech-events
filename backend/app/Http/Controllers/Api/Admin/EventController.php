@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreEventRequest;
-use App\Http\Requests\UpdateEventRequest;
 use App\Services\EventService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
@@ -14,35 +13,44 @@ class EventController extends Controller
 
     public function index(): JsonResponse
     {
-        $events = $this->eventService->getEventsForCurrentOrganization();
-        return response()->json($events);
+        return $this->eventService->getEventsForCurrentOrganization();
     }
 
-    public function store(StoreEventRequest $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        $data = $request->validated();
-        $event = $this->eventService->createEvent($data);
-        
-        return response()->json($event, 201);
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'venue' => 'required|string|max:255',
+            'date' => 'required|date|after:now',
+            'price' => 'required|numeric|min:0',
+            'max_attendees' => 'required|integer|min:1',
+        ]);
+
+        return $this->eventService->createEvent($data);
     }
 
     public function show(string $id): JsonResponse
     {
-        $event = $this->eventService->getEvent($id);
-        return response()->json($event);
+        return $this->eventService->getEvent($id);
     }
 
-    public function update(UpdateEventRequest $request, string $id): JsonResponse
+    public function update(Request $request, string $id): JsonResponse
     {
-        $data = $request->validated();
-        $event = $this->eventService->updateEvent($id, $data);
-        
-        return response()->json($event);
+        $data = $request->validate([
+            'title' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'venue' => 'sometimes|string|max:255',
+            'date' => 'sometimes|date|after:now',
+            'price' => 'sometimes|numeric|min:0',
+            'max_attendees' => 'sometimes|integer|min:1',
+        ]);
+
+        return $this->eventService->updateEvent($id, $data);
     }
 
     public function destroy(string $id): JsonResponse
     {
-        $this->eventService->deleteEvent($id);
-        return response()->json(null, 204);
+        return $this->eventService->deleteEvent($id);
     }
 }
