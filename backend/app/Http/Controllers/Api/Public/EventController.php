@@ -3,47 +3,31 @@
 namespace App\Http\Controllers\Api\Public;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\RegisterAttendeeRequest;
+use App\Services\EventService;
+use Illuminate\Http\JsonResponse;
 
 class EventController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(private EventService $eventService) {}
+
+    public function index(): JsonResponse
     {
-        //
+        $events = $this->eventService->getUpcomingPublicEvents();
+        return response()->json($events);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function show(string $id): JsonResponse
     {
-        //
+        $event = $this->eventService->getPublicEvent($id);
+        return response()->json($event);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function register(RegisterAttendeeRequest $request, string $id): JsonResponse
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $data = $request->validated();
+        $response = $this->eventService->registerAttendee($id, $data);
+        
+        return response()->json($response['data'], $response['status']);
     }
 }

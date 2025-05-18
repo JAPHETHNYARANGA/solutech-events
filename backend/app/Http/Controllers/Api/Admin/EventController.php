@@ -3,47 +3,46 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreEventRequest;
+use App\Http\Requests\UpdateEventRequest;
+use App\Services\EventService;
+use Illuminate\Http\JsonResponse;
 
 class EventController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(private EventService $eventService) {}
+
+    public function index(): JsonResponse
     {
-        //
+        $events = $this->eventService->getEventsForCurrentOrganization();
+        return response()->json($events);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreEventRequest $request): JsonResponse
     {
-        //
+        $data = $request->validated();
+        $event = $this->eventService->createEvent($data);
+        
+        return response()->json($event, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
-        //
+        $event = $this->eventService->getEvent($id);
+        return response()->json($event);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(UpdateEventRequest $request, string $id): JsonResponse
     {
-        //
+        $data = $request->validated();
+        $event = $this->eventService->updateEvent($id, $data);
+        
+        return response()->json($event);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
-        //
+        $this->eventService->deleteEvent($id);
+        return response()->json(null, 204);
     }
 }
