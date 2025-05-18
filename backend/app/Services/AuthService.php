@@ -32,7 +32,7 @@ class AuthService
 
     public function logout(): array
     {
-        // Auth::user()->tokens()->delete();
+        Auth::user()->tokens()->delete();
         
         return [
             'status' => 200,

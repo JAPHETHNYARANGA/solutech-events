@@ -3,47 +3,34 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreOrganizationRequest;
+use App\Http\Requests\UpdateOrganizationRequest;
+use App\Services\OrganizationService;
+use Illuminate\Http\JsonResponse;
 
 class OrganizationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(private OrganizationService $organizationService) {}
+
+    public function store(StoreOrganizationRequest $request): JsonResponse
     {
-        //
+        $data = $request->validated();
+        $organization = $this->organizationService->createOrganization($data);
+        
+        return response()->json($organization, 201);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function update(UpdateOrganizationRequest $request, string $id): JsonResponse
     {
-        //
+        $data = $request->validated();
+        $organization = $this->organizationService->updateOrganization($id, $data);
+        
+        return response()->json($organization);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function destroy(string $id): JsonResponse
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $this->organizationService->deleteOrganization($id);
+        return response()->json(null, 204);
     }
 }
