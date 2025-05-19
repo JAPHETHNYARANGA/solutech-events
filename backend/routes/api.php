@@ -1,15 +1,20 @@
 <?php
 
-use App\Http\Controllers\Api\Public\EventController;
-use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Public\EventController;
 
-Route::prefix('public')->group(function () {
-    Route::get('events', [EventController::class, 'indexAll']); // Show all events
+// Central domain routes
+Route::prefix('auth')->group(function () {
+    Route::post('register', [AuthController::class, 'register']);
+    Route::post('login', [AuthController::class, 'login']);
+    Route::post('logout', [AuthController::class, 'logout'])
+        ->middleware('auth:sanctum');
 });
 
-Route::prefix('auth')->group(function () {
-    Route::post('register', [AuthController::class, 'register']); // Admin registration
-    Route::post('login', [AuthController::class, 'login']); // Admin login
+// Public routes available on central domain
+Route::prefix('public')->group(function () {
+    Route::get('organizations', [AuthController::class, 'listOrganizations']);
+    Route::get('events', [EventController::class, 'indexAll']);
 });

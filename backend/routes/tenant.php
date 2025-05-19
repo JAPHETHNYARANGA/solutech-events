@@ -3,14 +3,14 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
-use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
+use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 Route::middleware([
     'api',
-    InitializeTenancyByDomain::class,
+    InitializeTenancyByPath::class,
     PreventAccessFromCentralDomains::class,
-])->group(function () {
+])->prefix('{organization}')->group(function () {
     
     // Public Event Routes
     Route::prefix('public')->group(function () {
@@ -21,7 +21,5 @@ Route::middleware([
     // Admin Routes
     Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
         Route::apiResource('events', \App\Http\Controllers\Api\Admin\EventController::class);
-        Route::apiResource('events.attendees', \App\Http\Controllers\Api\Admin\AttendeeController::class)
-            ->only(['index', 'show', 'destroy']);
     });
 });

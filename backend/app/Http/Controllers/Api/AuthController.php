@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\Organization;
 use App\Models\Tenant;
-use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,27 +14,26 @@ use Stancl\Tenancy\Database\Models\Domain;
 
 class AuthController extends Controller
 {
-    public function __construct(private AuthService $authService) {}
-
-
     public function register(Request $request): JsonResponse
     {
         try {
             $data = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:admins,email',
-                'password' => 'required|string|min:8',
+                'password' => 'required|string',
                 'organization_name' => 'required|string|max:255',
-                'organization_slug' => 'required|string|max:255|unique:organizations,slug'
+                'organization_slug' => 'required|string|max:255|alpha_dash|unique:organizations,slug'
             ]);
 
             DB::beginTransaction();
 
+            // Create organization
             $organization = Organization::create([
                 'name' => $data['organization_name'],
                 'slug' => $data['organization_slug']
             ]);
 
+            // Create tenant (no domain needed for path-based)
             $tenant = Tenant::create([
                 'id' => $data['organization_slug'],
                 'data' => [
@@ -44,14 +42,7 @@ class AuthController extends Controller
                 ]
             ]);
 
-            $domain = $data['organization_slug'] . '.' . config('tenancy.central_domains')[0];
-            $tenant->domains()->create([
-                'domain' => $domain,
-                'tenant_id' => $organization->slug,
-            ]);
-
-            DB::commit();
-
+            // Initialize tenancy and create admin
             tenancy()->initialize($tenant);
 
             $admin = Admin::create([
@@ -61,16 +52,20 @@ class AuthController extends Controller
                 'organization_id' => $organization->id
             ]);
 
+            // Create default database for tenant
             tenancy()->end();
+
+            DB::commit();
 
             return response()->json([
                 'message' => 'Registration successful',
-                'domain' => $domain,
-                'admin' => $admin
+                'redirect_to' => url("/{$organization->slug}/admin"),
+                'admin' => $admin,
+                'organization' => $organization
             ], 201);
+
         } catch (\Exception $e) {
             DB::rollBack();
-
             return response()->json([
                 'message' => 'Registration failed',
                 'error' => $e->getMessage()
@@ -78,49 +73,41 @@ class AuthController extends Controller
         }
     }
 
-
-
     public function login(Request $request): JsonResponse
     {
-        try {
-            $credentials = $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|string'
-            ]);
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string'
+        ]);
 
-            $response = $this->authService->login($credentials);
+        $admin = Admin::where('email', $credentials['email'])->first();
 
-            if ($response->getStatusCode() === 200) {
-                $admin = Admin::where('email', $credentials['email'])->firstOrFail();
-
-                $tenant = \App\Models\Tenant::find($admin->organization->slug);
-                $domainModel = $tenant?->domains()->first();
-                if (!$domainModel) {
-                    return response()->json([
-                        'message' => 'Login successful, but domain not found'
-                    ], 200);
-                }
-
-                $domain = $domainModel->domain;
-
-                $response->setData(array_merge($response->getData(true), [
-                    'redirect_to' => 'https://' . $domain . '/admin'
-                ]));
-            }
-
-            return $response;
-        } catch (\Exception $e) {
+        if (!$admin || !Hash::check($credentials['password'], $admin->password)) {
             return response()->json([
-                'message' => 'Login failed',
-                'error' => $e->getMessage()
-            ], 500);
+                'message' => 'Invalid credentials'
+            ], 401);
         }
+
+        // Initialize tenancy for the admin's organization
+        tenancy()->initialize($admin->organization->slug);
+
+        $token = $admin->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'admin' => $admin,
+            'redirect_to' => url("/{$admin->organization->slug}/admin")
+        ]);
     }
 
-
-
-    public function logout(): JsonResponse
+    public function logout(Request $request): JsonResponse
     {
-        return $this->authService->logout();
+        $request->user()->currentAccessToken()->delete();
+        tenancy()->end();
+        
+        return response()->json([
+            'message' => 'Logged out successfully'
+        ]);
     }
 }

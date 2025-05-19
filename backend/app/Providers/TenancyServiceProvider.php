@@ -127,6 +127,8 @@ class TenancyServiceProvider extends ServiceProvider
             }
         });
     }
+  
+
 
     protected function makeTenancyMiddlewareHighestPriority()
     {

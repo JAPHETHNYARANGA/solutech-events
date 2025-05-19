@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Services\EventService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class EventController extends Controller
 {
@@ -23,6 +24,25 @@ class EventController extends Controller
         return response()->json($events);
     }
 
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'venue' => 'required|string|max:255',
+            'date' => 'required|date',
+            'price' => 'required|numeric|min:0',
+        ]);
+
+        $event = Event::create([
+            ...$validated,
+            'organization_id' => Auth::user()->organization_id
+        ]);
+
+        return response()->json([
+            'message' => 'Event created successfully',
+            'event' => $event
+        ], 201);
+    }
     // Show single event (tenant domain)
     public function show(string $id): JsonResponse
     {
