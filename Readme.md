@@ -32,7 +32,7 @@ After cloning the repository:
 
 ```bash
 git clone https://github.com/JAPHETHNYARANGA/solutech-events.git
-cd solutech-events
+cd solutech-events ```
 
 # 1. Make the scripts executable (only needed once)
 chmod +x setup.sh start.sh
@@ -110,9 +110,13 @@ Runs on: http://127.0.0.1:8000
 ## 🖥 Development Workflow
 
 Start both servers at once using:
+Run this in your terminal;
 
 ```bash
 ./start.sh
+
+```
+
 
 This launches:
 
