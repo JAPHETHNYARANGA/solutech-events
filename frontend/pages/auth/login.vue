@@ -14,7 +14,7 @@
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-        <form class="space-y-6" @submit.prevent="login">
+        <form class="space-y-6" @submit.prevent="() => login()">
           <div v-if="errorMessage" class="rounded-md bg-red-50 p-4">
             <div class="flex">
               <div class="flex-shrink-0">
@@ -69,12 +69,6 @@
               <label for="remember-me" class="ml-2 block text-sm text-gray-900">
                 Remember me
               </label>
-            </div>
-
-            <div class="text-sm">
-              <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">
-                Forgot your password?
-              </a>
             </div>
           </div>
 
@@ -136,6 +130,7 @@ import { XCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
 import { useAuthStore } from '~/stores/auth'
 
 const authStore = useAuthStore()
+console.log(authStore) // Check if the store and its methods are properly available
 
 const form = reactive({
   email: '',
@@ -155,11 +150,17 @@ const login = async () => {
       email: form.email,
       password: form.password
     })
+
+    // Check if login was successful and organization slug exists
+    if (response && authStore.organization?.slug) {
+      await navigateTo(`/${authStore.organization.slug}/admin`)
+    } else {
+      throw new Error('Login successful but missing organization information')
+    }
     
-    // Redirect to admin dashboard
-    navigateTo(response.redirect_to)
   } catch (error) {
-    errorMessage.value = error.data?.message || 'Invalid email or password'
+    errorMessage.value = error.message || 'Login failed. Please check your credentials.'
+    console.error('Login error:', error)
   } finally {
     loading.value = false
   }

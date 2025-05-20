@@ -28,9 +28,39 @@ export const fetchAdminEvents = async (organizationSlug) => {
 }
 
 export const createEvent = async (organizationSlug, eventData) => {
-  return await $fetch(`${API_BASE_URL}/${organizationSlug}/admin/events`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(eventData)
+    // Log the event data (payload)
+    console.log('Event Data:', eventData);
+  
+    // Get the authorization headers and log them
+    const authHeaders = getAuthHeaders();
+    console.log('Authorization Headers:', authHeaders);
+  
+    try {
+        return await $fetch(`${API_BASE_URL}/${organizationSlug}/admin/events`, {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify(eventData)
+        })
+      } catch (error) {
+        console.error("Error creating event:", error)
+        throw new Error("Failed to create event: " + error.message)
+      }
+      
+  }
+  
+
+// Add deleteEvent function
+export const deleteEvent = async (organizationSlug, eventId) => {
+  return await $fetch(`${API_BASE_URL}/${organizationSlug}/admin/events/${eventId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
   })
 }
+
+export const updateEvent = async (organizationSlug, eventId, eventData) => {
+    return await $fetch(`${API_BASE_URL}/${organizationSlug}/admin/events/${eventId}`, {
+      method: 'PUT',  
+      headers: getAuthHeaders(),
+      body: JSON.stringify(eventData)
+    })
+  }

@@ -256,10 +256,11 @@ const register = async () => {
       organization_slug: form.organization_slug.toLowerCase().replace(/\s+/g, '-')
     }
 
-    const response = await authStore.register(registrationData)
+    await authStore.register(registrationData)
     
-    // Redirect to admin dashboard
-    navigateTo(response.redirect_to)
+    // Show success message and redirect to login
+    useToast().success('Registration successful! Please login.')
+    navigateTo('/auth/login')
   } catch (error) {
     errorMessage.value = error.data?.message || 'Registration failed. Please try again.'
   } finally {

@@ -57,67 +57,227 @@
             </dl>
           </div>
   
-          <div class="px-4 py-4 sm:px-6 bg-gray-50 flex justify-end">
-            <NuxtLink 
-            :to="`/${organization}/events/${id}/register`"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          <div class="px-4 py-4 sm:px-6 bg-gray-50 flex justify-end" v-if="event">
+            <button 
+              @click="showModal = true"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-            Register Now
-            </NuxtLink>
+              Register Now
+            </button>
           </div>
         </div>
       </main>
+  
+      <!-- Registration Modal -->
+    <div v-if="showModal" class="fixed z-50 inset-0 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" @click="showModal = false"></div>
+        
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-lg shadow-xl transform transition-all max-w-lg w-full mx-4">
+        <div class="px-6 py-4">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+            Register for {{ event.title }}
+            </h3>
+            
+            <form @submit.prevent="submitRegistration">
+            <div class="space-y-4">
+                <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    v-model="form.name"
+                    class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    required
+                >
+                </div>
+
+                <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    v-model="form.email"
+                    class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    required
+                >
+                </div>
+
+                <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                <input 
+                    type="tel" 
+                    id="phone" 
+                    v-model="form.phone"
+                    class="mt-1 block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    required
+                >
+                </div>
+
+                <div class="flex items-center">
+                <input 
+                    id="terms" 
+                    type="checkbox" 
+                    v-model="form.agreeTerms"
+                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    required
+                >
+                <label for="terms" class="ml-2 block text-sm text-gray-700">
+                    I agree to the terms and conditions
+                </label>
+                </div>
+            </div>
+
+            <!-- Success/Error messages -->
+            <div v-if="successMessage" class="mt-4 rounded-md bg-green-50 p-4">
+                <div class="flex">
+                <div class="flex-shrink-0">
+                    <CheckCircleIcon class="h-5 w-5 text-green-400" />
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-green-800">{{ successMessage }}</p>
+                </div>
+                </div>
+            </div>
+
+            <div v-if="errorMessage" class="mt-4 rounded-md bg-red-50 p-4">
+                <div class="flex">
+                <div class="flex-shrink-0">
+                    <XCircleIcon class="h-5 w-5 text-red-400" />
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-red-800">{{ errorMessage }}</p>
+                </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-3">
+                <button 
+                type="button" 
+                @click="showModal = false"
+                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                Cancel
+                </button>
+                <button 
+                type="submit" 
+                :disabled="registrationLoading"
+                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                >
+                <span v-if="registrationLoading">
+                    <ArrowPathIcon class="animate-spin h-4 w-4 mr-2 inline" />
+                    Processing...
+                </span>
+                <span v-else>Register</span>
+                </button>
+            </div>
+            </form>
+        </div>
+        </div>
+    </div>
+    </div>
     </div>
   </template>
   
+  
   <script setup>
-  import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
+import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
+
+const route = useRoute()
+const { organization, id } = route.params
+
+const event = ref(null)
+const loading = ref(true)
+const error = ref(null)
+const registeredAttendees = ref([])
+
+// Modal state
+const showModal = ref(false)
+
+// Form state
+const form = reactive({
+  name: '',
+  email: '',
+  phone: '',
+  agreeTerms: false
+})
+
+const registrationLoading = ref(false)
+const successMessage = ref('')
+const errorMessage = ref('')
+
+
+const { data, error: fetchError } = await useFetch(
+  `http://localhost:8000/api/${organization}/public/events/${id}`
+)
+
+if (fetchError.value) {
+  error.value = fetchError.value
+  console.error('Failed to fetch event details:', fetchError.value)
+} else {
+  event.value = data.value
   
-  const route = useRoute()
-  const { organization, id } = route.params
-  
-  const event = ref(null)
-  const loading = ref(true)
-  const error = ref(null)
-  const registeredAttendees = ref([])
-  
-  onMounted(async () => {
-    try {
-      // Correct API endpoint with organization slug
-      const { data, error: fetchError } = await useFetch(
-        `http://127.0.0.1:8000/api/${organization}/public/events/${id}`
-      )
-      
-      if (fetchError.value) {
-        throw fetchError.value
-      }
-  
-      event.value = data.value
-      
-      // Mock registered attendees (replace with actual API call)
-      registeredAttendees.value = Array.from(
-        { length: Math.floor(Math.random() * event.value.max_attendees) }, 
-        (_, i) => ({
-          id: i + 1,
-          name: `Attendee ${i + 1}`
-        })
-      )
-    } catch (err) {
-      error.value = err
-      console.error('Failed to fetch event details:', err)
-    } finally {
-      loading.value = false
-    }
-  })
-  
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+  // Mock registered attendees (replace with actual API call)
+  registeredAttendees.value = Array.from(
+    { length: Math.floor(Math.random() * event.value.max_attendees) }, 
+    (_, i) => ({
+      id: i + 1,
+      name: `Attendee ${i + 1}`
     })
+  )
+}
+
+loading.value = false
+
+
+
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+const router = useRouter()
+const submitRegistration = async () => {
+  registrationLoading.value = true
+  successMessage.value = ''
+  errorMessage.value = ''
+  
+  try {
+    const response = await $fetch(`http://localhost:8000/api/${organization}/public/events/${id}/register `, {
+      method: 'POST',
+      body: {
+        name: form.name,
+        email: form.email,
+        phone: form.phone
+      }
+    })
+    
+    successMessage.value = `Thank you for registering! A confirmation has been sent to ${form.email}.`
+    
+    // Reset form after successful submission
+    setTimeout(() => {
+      form.name = ''
+      form.email = ''
+      form.phone = ''
+      form.agreeTerms = false
+      showModal.value = false
+      registeredAttendees.value.push({
+        id: registeredAttendees.value.length + 1,
+        name: form.name
+      })
+      router.push('/')
+    }, 2000)
+  } catch (err) {
+    errorMessage.value = err.data?.message || 'Registration failed. Please try again later.'
+  } finally {
+    registrationLoading.value = false
   }
-  </script>
+}
+</script>

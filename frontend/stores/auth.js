@@ -4,29 +4,37 @@ import { ref } from 'vue'
 import { API_BASE_URL, getAuthHeaders } from '~/utils/api'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref(null)
-  const token = ref(null)
-  const organization = ref(null)
-  const isAuthenticated = ref(false)
-
-  const login = async (credentials) => {
-    try {
-      const response = await $fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        body: JSON.stringify(credentials)
-      })
-      
-      user.value = response.admin
-      token.value = response.access_token
-      organization.value = response.admin.organization
-      isAuthenticated.value = true
-      
-      localStorage.setItem('authToken', response.access_token)
-      return response
-    } catch (error) {
-      throw error
+    const user = ref(null)
+    const token = ref(null)
+    const organization = ref(null)
+    
+    // Use computed for isAuthenticated to react to token changes
+    const isAuthenticated = computed(() => !!token.value)
+  
+    const login = async (credentials) => {
+      try {
+        const response = await $fetch(`${API_BASE_URL}/auth/login`, {
+          method: 'POST',
+          body: credentials // No need for JSON.stringify with $fetch
+        })
+        
+        // Set all auth state
+    token.value = response.access_token
+    user.value = response.admin
+    organization.value = response.admin.organization  // Make sure this contains the slug
+    
+        // Store in localStorage - consistent format
+        localStorage.setItem('authToken', response.access_token)
+        localStorage.setItem('authUser', JSON.stringify(response.admin))
+        localStorage.setItem('authOrganization', JSON.stringify(response.admin.organization))
+            
+        // Return full response for redirect handling
+        return response
+      } catch (error) {
+        // Format error consistently
+        throw new Error(error.data?.message || 'Login failed')
+      }
     }
-  }
 
   const register = async (userData) => {
     try {
