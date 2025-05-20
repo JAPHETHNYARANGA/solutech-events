@@ -14,6 +14,7 @@ php artisan migrate  # Optional, comment if not needed
 
 cd ..
 
+
 echo " Setting up Nuxt frontend..."
 cd frontend
 npm install
