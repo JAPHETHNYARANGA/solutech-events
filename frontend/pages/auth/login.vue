@@ -130,8 +130,12 @@
   </div>
 </template>
 
+
 <script setup>
 import { XCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
+import { useAuthStore } from '~/stores/auth'
+
+const authStore = useAuthStore()
 
 const form = reactive({
   email: '',
@@ -142,19 +146,22 @@ const form = reactive({
 const loading = ref(false)
 const errorMessage = ref('')
 
-const login = () => {
+const login = async () => {
   loading.value = true
   errorMessage.value = ''
   
-  // Simulate API call
-  setTimeout(() => {
-    if (form.email === 'admin@example.com' && form.password === 'password') {
-      // Successful login - redirect to dashboard
-      navigateTo('/admin')
-    } else {
-      errorMessage.value = 'Invalid email or password'
-    }
+  try {
+    const response = await authStore.login({
+      email: form.email,
+      password: form.password
+    })
+    
+    // Redirect to admin dashboard
+    navigateTo(response.redirect_to)
+  } catch (error) {
+    errorMessage.value = error.data?.message || 'Invalid email or password'
+  } finally {
     loading.value = false
-  }, 1500)
+  }
 }
 </script>

@@ -1,14 +1,25 @@
 <template>
-    <div class="min-h-screen bg-gray-50">
+    <div v-if="loading" class="flex justify-center items-center h-screen">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+    </div>
+    
+    <div v-else-if="error" class="text-center py-12">
+      <p class="text-red-500">Error loading event details</p>
+      <NuxtLink to="/" class="text-indigo-600 hover:text-indigo-800 mt-4 inline-block">
+        Back to home
+      </NuxtLink>
+    </div>
+    
+    <div v-else class="min-h-screen bg-gray-50">
       <header class="bg-white shadow">
         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <NuxtLink 
-            :to="`/${event.organization_slug}/events`" 
+            <NuxtLink 
+            to="/" 
             class="text-indigo-600 hover:text-indigo-800 flex items-center"
-          >
+            >
             <ArrowLeftIcon class="h-5 w-5 mr-1" />
             Back to events
-          </NuxtLink>
+            </NuxtLink>
         </div>
       </header>
   
@@ -39,17 +50,19 @@
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt class="text-sm font-medium text-gray-500">Available Spots</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ event.max_attendees - registeredAttendees.length }} of {{ event.max_attendees }} remaining</dd>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {{ event.max_attendees - registeredAttendees.length }} of {{ event.max_attendees }} remaining
+                </dd>
               </div>
             </dl>
           </div>
   
           <div class="px-4 py-4 sm:px-6 bg-gray-50 flex justify-end">
             <NuxtLink 
-              :to="`/${event.organization_slug}/events/${event.id}/register`"
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            :to="`/${organization}/events/${id}/register`"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              Register Now
+            Register Now
             </NuxtLink>
           </div>
         </div>
@@ -63,23 +76,39 @@
   const route = useRoute()
   const { organization, id } = route.params
   
-  // Dummy data - in a real app this would come from an API
-  const event = {
-    id: +id,
-    organization_id: 1,
-    organization_slug: organization,
-    title: 'Future of AI Conference',
-    description: 'Join us to explore the latest advancements in artificial intelligence and machine learning. This conference will feature talks from industry leaders, hands-on workshops, and networking opportunities.',
-    venue: 'Convention Center, Nairobi',
-    date: '2025-06-15T09:00:00',
-    price: 50,
-    max_attendees: 200
-  }
+  const event = ref(null)
+  const loading = ref(true)
+  const error = ref(null)
+  const registeredAttendees = ref([])
   
-  const registeredAttendees = ref([
-    { id: 1, name: 'John Doe', email: 'john@example.com', phone: '0712345678' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', phone: '0723456789' }
-  ])
+  onMounted(async () => {
+    try {
+      // Correct API endpoint with organization slug
+      const { data, error: fetchError } = await useFetch(
+        `http://127.0.0.1:8000/api/${organization}/public/events/${id}`
+      )
+      
+      if (fetchError.value) {
+        throw fetchError.value
+      }
+  
+      event.value = data.value
+      
+      // Mock registered attendees (replace with actual API call)
+      registeredAttendees.value = Array.from(
+        { length: Math.floor(Math.random() * event.value.max_attendees) }, 
+        (_, i) => ({
+          id: i + 1,
+          name: `Attendee ${i + 1}`
+        })
+      )
+    } catch (err) {
+      error.value = err
+      console.error('Failed to fetch event details:', err)
+    } finally {
+      loading.value = false
+    }
+  })
   
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {

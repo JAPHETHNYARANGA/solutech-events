@@ -205,56 +205,65 @@
     </div>
   </template>
   
-  <script setup>
-  import { XCircleIcon, ArrowPathIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
+<script setup>
+import { XCircleIcon, ArrowPathIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
+import { useAuthStore } from '~/stores/auth'
+
+const authStore = useAuthStore()
+
+const form = reactive({
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  password: '',
+  confirmPassword: '',
+  organization_name: '',
+  organization_slug: '',
+  acceptTerms: false
+})
+
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
+const loading = ref(false)
+const errorMessage = ref('')
+
+const register = async () => {
+  loading.value = true
+  errorMessage.value = ''
   
-  definePageMeta({
-    layout: 'default'
-  })
-  
-  const form = reactive({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    acceptTerms: false
-  })
-  
-  const showPassword = ref(false)
-  const showConfirmPassword = ref(false)
-  const loading = ref(false)
-  const errorMessage = ref('')
-  
-  const register = () => {
-    loading.value = true
-    errorMessage.value = ''
-    
-    // Validate password match
-    if (form.password !== form.confirmPassword) {
-      errorMessage.value = 'Passwords do not match'
-      loading.value = false
-      return
-    }
-  
-    // Validate password strength
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-    if (!passwordRegex.test(form.password)) {
-      errorMessage.value = 'Password must be at least 8 characters with uppercase, number, and special character'
-      loading.value = false
-      return
-    }
-  
-    // Simulate API call
-    setTimeout(() => {
-      // In a real app, you would call your registration API here
-      console.log('Registration data:', form)
-      
-      // Redirect to verification page
-      navigateTo('/auth/verify-email')
-      
-      loading.value = false
-    }, 1500)
+  // Validate password match
+  if (form.password !== form.confirmPassword) {
+    errorMessage.value = 'Passwords do not match'
+    loading.value = false
+    return
   }
-  </script>
+
+  // Validate password strength
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+  if (!passwordRegex.test(form.password)) {
+    errorMessage.value = 'Password must be at least 8 characters with uppercase, number, and special character'
+    loading.value = false
+    return
+  }
+
+  try {
+    const registrationData = {
+      name: `${form.firstName} ${form.lastName}`,
+      email: form.email,
+      password: form.password,
+      organization_name: form.organization_name,
+      organization_slug: form.organization_slug.toLowerCase().replace(/\s+/g, '-')
+    }
+
+    const response = await authStore.register(registrationData)
+    
+    // Redirect to admin dashboard
+    navigateTo(response.redirect_to)
+  } catch (error) {
+    errorMessage.value = error.data?.message || 'Registration failed. Please try again.'
+  } finally {
+    loading.value = false
+  }
+}
+</script>

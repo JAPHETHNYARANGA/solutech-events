@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-gray-50">
       <header class="bg-white shadow">
         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <h1 class="text-2xl font-bold text-gray-900">Register for {{ event.title }}</h1>
+          <!-- <h1 class="text-2xl font-bold text-gray-900">Register for {{ event.title }}</h1> -->
         </div>
       </header>
   
@@ -100,18 +100,13 @@
     </div>
   </template>
   
+
   <script setup>
   import { CheckCircleIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
+  import { registerForEvent } from '~/services/eventService'
   
   const route = useRoute()
   const { organization, id } = route.params
-  
-  // Dummy event data
-  const event = {
-    id: +id,
-    organization_slug: organization,
-    title: 'Future of AI Conference'
-  }
   
   const form = reactive({
     name: '',
@@ -124,24 +119,29 @@
   const successMessage = ref('')
   const errorMessage = ref('')
   
-  const submitRegistration = () => {
+  const submitRegistration = async () => {
     loading.value = true
     successMessage.value = ''
     errorMessage.value = ''
     
-    // Simulate API call
-    setTimeout(() => {
-      if (Math.random() > 0.2) { // 80% success rate for demo
-        successMessage.value = `Thank you for registering! A confirmation has been sent to ${form.email}.`
-        // Reset form
-        form.name = ''
-        form.email = ''
-        form.phone = ''
-        form.agreeTerms = false
-      } else {
-        errorMessage.value = 'Registration failed. Please try again later.'
-      }
+    try {
+      const response = await registerForEvent(organization, id, {
+        name: form.name,
+        email: form.email,
+        phone: form.phone
+      })
+      
+      successMessage.value = `Thank you for registering! A confirmation has been sent to ${form.email}.`
+      
+      // Reset form
+      form.name = ''
+      form.email = ''
+      form.phone = ''
+      form.agreeTerms = false
+    } catch (error) {
+      errorMessage.value = error.data?.message || 'Registration failed. Please try again later.'
+    } finally {
       loading.value = false
-    }, 1500)
+    }
   }
   </script>
