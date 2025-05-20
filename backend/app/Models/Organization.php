@@ -11,14 +11,14 @@ class Organization extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug'];
+    protected $fillable = ['name', 'slug', 'data'];
 
-    public function admins()
+    public function admins(): HasMany
     {
         return $this->hasMany(Admin::class);
     }
 
-    public function events()
+    public function events(): HasMany
     {
         return $this->hasMany(Event::class);
     }
@@ -28,8 +28,5 @@ class Organization extends Model
         return $this->hasManyThrough(Attendee::class, Event::class);
     }
 
-    public function domains(): HasMany
-    {
-        return $this->hasMany(Domain::class, 'tenant_id', 'slug');
-    }
+   
 }

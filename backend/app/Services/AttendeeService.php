@@ -8,25 +8,23 @@ use Illuminate\Support\Facades\Auth;
 
 class AttendeeService
 {
-    public function getAttendeesForEvent(string $eventId)
+    public function getAttendeesForEvent(string $organizationSlug, string $eventId)
     {
-        $event = Event::where('organization_id', Auth::user()->organization_id)
+        $event = Event::whereHas('organization', fn($q) => $q->where('slug', $organizationSlug))
             ->findOrFail($eventId);
             
-        return $event->attendees;
+        return $event->attendees()->get();
     }
 
-    public function getAttendee(string $id): Attendee
+    public function getAttendee(string $organizationSlug, string $id): Attendee
     {
-        return Attendee::whereHas('event', function($query) {
-                $query->where('organization_id', Auth::user()->organization_id);
-            })
+        return Attendee::whereHas('event.organization', fn($q) => $q->where('slug', $organizationSlug))
             ->findOrFail($id);
     }
 
-    public function deleteAttendee(string $id): void
+    public function deleteAttendee(string $organizationSlug, string $id): void
     {
-        $attendee = $this->getAttendee($id);
+        $attendee = $this->getAttendee($organizationSlug, $id);
         $attendee->delete();
     }
 }

@@ -4,18 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ActivityLog extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['event_id', 'action', 'changes'];
+    protected $fillable = ['event_id', 'action', 'changes', 'user_id'];
 
     protected $casts = [
         'changes' => 'array',
     ];
 
-    public function event() {
+    public function event(): BelongsTo
+    {
         return $this->belongsTo(Event::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'user_id');
     }
 }

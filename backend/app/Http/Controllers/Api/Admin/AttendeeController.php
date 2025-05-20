@@ -10,21 +10,21 @@ class AttendeeController extends Controller
 {
     public function __construct(private AttendeeService $attendeeService) {}
 
-    public function index(string $eventId): JsonResponse
+    public function index(string $organizationSlug, string $eventId): JsonResponse
     {
-        $attendees = $this->attendeeService->getAttendeesForEvent($eventId);
+        $attendees = $this->attendeeService->getAttendeesForEvent($organizationSlug, $eventId);
         return response()->json($attendees);
     }
 
-    public function show(string $eventId, string $id): JsonResponse
+    public function show(string $organizationSlug, string $eventId, string $id): JsonResponse
     {
-        $attendee = $this->attendeeService->getAttendee($id);
+        $attendee = $this->attendeeService->getAttendee($organizationSlug, $id);
         return response()->json($attendee);
     }
 
-    public function destroy(string $eventId, string $id): JsonResponse
+    public function destroy(string $organizationSlug, string $eventId, string $id): JsonResponse
     {
-        $this->attendeeService->deleteAttendee($id);
+        $this->attendeeService->deleteAttendee($organizationSlug, $id);
         return response()->json(null, 204);
     }
 }

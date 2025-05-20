@@ -5,12 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\Organization;
-use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Stancl\Tenancy\Database\Models\Domain;
 
 class AuthController extends Controller
 {
@@ -33,18 +31,7 @@ class AuthController extends Controller
                 'slug' => $data['organization_slug']
             ]);
 
-            // Create tenant (no domain needed for path-based)
-            $tenant = Tenant::create([
-                'id' => $data['organization_slug'],
-                'data' => [
-                    'organization_id' => $organization->id,
-                    'organization_name' => $data['organization_name']
-                ]
-            ]);
-
-            // Initialize tenancy and create admin
-            tenancy()->initialize($tenant);
-
+            // Create admin
             $admin = Admin::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -52,14 +39,11 @@ class AuthController extends Controller
                 'organization_id' => $organization->id
             ]);
 
-            // Create default database for tenant
-            tenancy()->end();
-
             DB::commit();
 
             return response()->json([
                 'message' => 'Registration successful',
-                'redirect_to' => url("/{$organization->slug}/admin"),
+                'redirect_to' => url("/api/{$organization->slug}/admin"), // Added /api
                 'admin' => $admin,
                 'organization' => $organization
             ], 201);
@@ -88,23 +72,19 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Initialize tenancy for the admin's organization
-        tenancy()->initialize($admin->organization->slug);
-
         $token = $admin->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
             'admin' => $admin,
-            'redirect_to' => url("/{$admin->organization->slug}/admin")
+            'redirect_to' => url("/api/{$admin->organization->slug}/admin") // Added /api
         ]);
     }
 
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
-        tenancy()->end();
         
         return response()->json([
             'message' => 'Logged out successfully'

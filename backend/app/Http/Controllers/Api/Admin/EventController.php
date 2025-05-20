@@ -12,10 +12,11 @@ class EventController extends Controller
 {
     public function __construct(private EventService $eventService) {}
 
-    public function index(): JsonResponse
+    public function index(string $organizationSlug): JsonResponse
     {
         try {
-            return $this->eventService->getEventsForCurrentOrganization();
+            $events = $this->eventService->getEventsForOrganization($organizationSlug);
+            return response()->json($events);
         } catch (Throwable $e) {
             return response()->json([
                 'message' => 'Failed to fetch events',
@@ -24,7 +25,7 @@ class EventController extends Controller
         }
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, string $organizationSlug): JsonResponse
     {
         try {
             $data = $request->validate([
@@ -36,7 +37,7 @@ class EventController extends Controller
                 'max_attendees' => 'required|integer|min:1',
             ]);
 
-            return $this->eventService->createEvent($data);
+            return $this->eventService->createEvent($organizationSlug, $data);
         } catch (Throwable $e) {
             return response()->json([
                 'message' => 'Failed to create event',
@@ -45,10 +46,10 @@ class EventController extends Controller
         }
     }
 
-    public function show(string $id): JsonResponse
+    public function show(string $organizationSlug, string $id): JsonResponse
     {
         try {
-            return $this->eventService->getEvent($id);
+            return $this->eventService->getOrganizationEvent($organizationSlug, $id);
         } catch (Throwable $e) {
             return response()->json([
                 'message' => 'Failed to fetch event',
@@ -57,7 +58,7 @@ class EventController extends Controller
         }
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    public function update(Request $request, string $organizationSlug, string $id): JsonResponse
     {
         try {
             $data = $request->validate([
@@ -69,7 +70,7 @@ class EventController extends Controller
                 'max_attendees' => 'sometimes|integer|min:1',
             ]);
 
-            return $this->eventService->updateEvent($id, $data);
+            return $this->eventService->updateEvent($organizationSlug, $id, $data);
         } catch (Throwable $e) {
             return response()->json([
                 'message' => 'Failed to update event',
@@ -78,10 +79,10 @@ class EventController extends Controller
         }
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(string $organizationSlug, string $id): JsonResponse
     {
         try {
-            return $this->eventService->deleteEvent($id);
+            return $this->eventService->deleteEvent($organizationSlug, $id);
         } catch (Throwable $e) {
             return response()->json([
                 'message' => 'Failed to delete event',

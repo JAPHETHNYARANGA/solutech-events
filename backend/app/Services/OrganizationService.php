@@ -3,26 +3,28 @@
 namespace App\Services;
 
 use App\Models\Organization;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class OrganizationService
 {
-    public function createOrganization(array $data): Organization
+    public function createOrganization(array $data): JsonResponse
     {
-        return Organization::create($data);
+        $organization = Organization::create($data);
+        return response()->json($organization, Response::HTTP_CREATED);
     }
 
-    public function updateOrganization(string $id, array $data): Organization
+    public function updateOrganization(string $id, array $data): JsonResponse
     {
         $organization = Organization::findOrFail($id);
         $organization->update($data);
-        
-        return $organization;
+        return response()->json($organization);
     }
 
-    public function deleteOrganization(string $id): void
+    public function deleteOrganization(string $id): JsonResponse
     {
         $organization = Organization::findOrFail($id);
         $organization->delete();
+        return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 }
