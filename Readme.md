@@ -113,7 +113,6 @@ Start both servers at once using:
 
 ```bash
 ./start.sh
-```
 
 This launches:
 
