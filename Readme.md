@@ -30,7 +30,7 @@ After cloning the repository:
 
 ### 🐧 On Linux
 
-```bash
+```
 git clone https://github.com/JAPHETHNYARANGA/solutech-events.git
 cd solutech-events ```
 
@@ -50,8 +50,9 @@ dos2unix setup.sh start.sh
 chmod +x setup.sh start.sh
 
 # 3. Run the setup script in your terminal
-
+```
 ./setup.sh
+```
 
 This will:
 
