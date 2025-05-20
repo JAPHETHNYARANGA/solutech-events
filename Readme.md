@@ -49,8 +49,10 @@ dos2unix setup.sh start.sh
 # 2. Add execute permission
 chmod +x setup.sh start.sh
 
-# 3. Run the setup script
+# 3. Run the setup script in your terminal
+
 ./setup.sh
+
 This will:
 
 Install backend (Laravel) and frontend (Nuxt) dependencies
@@ -61,7 +63,7 @@ Run database migrations (optional)
 
 Start both servers concurrently
 
----
+
 
 ## ✅ Requirements
 
@@ -74,7 +76,7 @@ Make sure you have the following installed:
 * MySQL
 * Git
 
----
+
 
 ## 🔧 Laravel Backend
 
@@ -85,7 +87,7 @@ Make sure you have the following installed:
 * Runs on: `http://127.0.0.1:8000`
 
 
-After setup, update your .env file in the backend/ folder with your local MySQL database credentials:
+After setup, update your .env file in the backend folder with your local MySQL database credentials:
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -95,7 +97,6 @@ DB_USERNAME=your_username
 DB_PASSWORD=your_password
 Runs on: http://127.0.0.1:8000
 
----
 
 ## 🌐 Nuxt Frontend
 
@@ -105,17 +106,13 @@ Runs on: http://127.0.0.1:8000
 * Tailwind CSS and Headless UI for styling
 * Runs on: `http://localhost:3000`
 
----
 
 ## 🖥 Development Workflow
 
 Start both servers at once using:
 Run this in your terminal;
 
-```bash
 ./start.sh
-
-```
 
 
 This launches:
@@ -125,7 +122,6 @@ This launches:
 
 Press `Ctrl + C` to stop both.
 
----
 
 ## 📸 Screenshots
 
@@ -136,7 +132,7 @@ Press `Ctrl + C` to stop both.
 ![alt text](image-4.png)
 ![alt text](image-5.png)
 ![alt text](image-6.png)
----
+
 
 ## 🛠 Future Improvements
 
