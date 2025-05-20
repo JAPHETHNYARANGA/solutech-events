@@ -36,24 +36,24 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }
 
-  const register = async (userData) => {
-    try {
-      const response = await $fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        body: JSON.stringify(userData)
-      })
+    const register = async (userData) => {
+        try {
+          const response = await $fetch(`${API_BASE_URL}/auth/register`, {
+            method: 'POST',
+            body: userData  // no need for JSON.stringify with $fetch
+          })
       
-      user.value = response.admin
-      token.value = response.access_token
-      organization.value = response.organization
-      isAuthenticated.value = true
+          // Optional: store admin/organization if needed
+          user.value = response.admin
+          organization.value = response.organization
       
-      localStorage.setItem('authToken', response.access_token)
-      return response
-    } catch (error) {
-      throw error
-    }
-  }
+          // No token provided, so don't set it
+          return response
+        } catch (error) {
+          throw error
+        }
+      }
+      
 
   const logout = async () => {
     try {

@@ -120,7 +120,7 @@
   
             <div>
               <label for="confirm-password" class="block text-sm font-medium text-gray-700">Confirm password</label>
-              <div class="mt-1">
+              <div class="mt-1 relative">
                 <input 
                   :type="showConfirmPassword ? 'text' : 'password'"
                   id="confirm-password" 
@@ -129,7 +129,50 @@
                   required
                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 >
+                <button 
+                  type="button" 
+                  @click="showConfirmPassword = !showConfirmPassword"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <EyeIcon v-if="showConfirmPassword" class="h-5 w-5 text-gray-400" />
+                  <EyeSlashIcon v-else class="h-5 w-5 text-gray-400" />
+                </button>
               </div>
+            </div>
+  
+            <div>
+              <label for="organization-name" class="block text-sm font-medium text-gray-700">Organization Name</label>
+              <div class="mt-1">
+                <input 
+                  type="text" 
+                  id="organization-name" 
+                  v-model="form.organization_name"
+                  @input="generateSlug"
+                  required
+                  class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                >
+              </div>
+            </div>
+  
+            <div>
+              <label for="organization-slug" class="block text-sm font-medium text-gray-700">Organization URL</label>
+              <div class="mt-1 flex rounded-md shadow-sm">
+                <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
+                  eventhub.com/
+                </span>
+                <input
+                  type="text"
+                  id="organization-slug"
+                  v-model="form.organization_slug"
+                  @input="validateSlug"
+                  required
+                  class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border"
+                  placeholder="your-organization"
+                />
+              </div>
+              <p class="mt-2 text-xs text-gray-500">
+                Letters, numbers, and hyphens only. This will be your unique URL.
+              </p>
             </div>
   
             <div class="flex items-start">
@@ -205,66 +248,110 @@
     </div>
   </template>
   
-<script setup>
-import { XCircleIcon, ArrowPathIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
-import { useAuthStore } from '~/stores/auth'
 
-const authStore = useAuthStore()
-
-const form = reactive({
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  password: '',
-  confirmPassword: '',
-  organization_name: '',
-  organization_slug: '',
-  acceptTerms: false
-})
-
-const showPassword = ref(false)
-const showConfirmPassword = ref(false)
-const loading = ref(false)
-const errorMessage = ref('')
-
-const register = async () => {
-  loading.value = true
-  errorMessage.value = ''
   
-  // Validate password match
-  if (form.password !== form.confirmPassword) {
-    errorMessage.value = 'Passwords do not match'
-    loading.value = false
-    return
-  }
-
-  // Validate password strength
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-  if (!passwordRegex.test(form.password)) {
-    errorMessage.value = 'Password must be at least 8 characters with uppercase, number, and special character'
-    loading.value = false
-    return
-  }
-
-  try {
-    const registrationData = {
-      name: `${form.firstName} ${form.lastName}`,
-      email: form.email,
-      password: form.password,
-      organization_name: form.organization_name,
-      organization_slug: form.organization_slug.toLowerCase().replace(/\s+/g, '-')
+  <script setup>
+  import { XCircleIcon, ArrowPathIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
+  import { useAuthStore } from '~/stores/auth'
+  
+  const authStore = useAuthStore()
+  
+  const form = reactive({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    organization_name: '',
+    organization_slug: '',
+    acceptTerms: false
+  })
+  
+  const showPassword = ref(false)
+  const showConfirmPassword = ref(false)
+  const loading = ref(false)
+  const errorMessage = ref('')
+  
+  // Auto-generate slug from organization name
+  const generateSlug = () => {
+    if (form.organization_name && !form.organization_slug) {
+      form.organization_slug = form.organization_name
+        .toLowerCase()
+        .replace(/\s+/g, '-') // Replace spaces with -
+        .replace(/[^\w-]+/g, '') // Remove all non-word chars
     }
-
-    await authStore.register(registrationData)
-    
-    // Show success message and redirect to login
-    useToast().success('Registration successful! Please login.')
-    navigateTo('/auth/login')
-  } catch (error) {
-    errorMessage.value = error.data?.message || 'Registration failed. Please try again.'
-  } finally {
-    loading.value = false
   }
-}
-</script>
+  
+  // Validate slug format
+  const validateSlug = () => {
+    form.organization_slug = form.organization_slug
+      .toLowerCase()
+      .replace(/\s+/g, '-') // Replace spaces with -
+      .replace(/[^\w-]+/g, '') // Remove all non-word chars
+  }
+  
+  const register = async () => {
+    loading.value = true
+    errorMessage.value = ''
+    
+    // Validate required fields
+    if (!form.acceptTerms) {
+      errorMessage.value = 'You must accept the terms and conditions'
+      loading.value = false
+      alert('Please accept the terms and conditions')
+      return
+    }
+  
+    // Validate passwords match
+    if (form.password !== form.confirmPassword) {
+      errorMessage.value = 'Passwords do not match'
+      loading.value = false
+      alert('Passwords do not match')
+      return
+    }
+  
+    // Validate password strength
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+    if (!passwordRegex.test(form.password)) {
+      errorMessage.value = 'Password must be at least 8 characters with uppercase, number, and special character'
+      loading.value = false
+      alert('Password must be at least 8 characters with uppercase, number, and special character')
+      return
+    }
+  
+    // Validate organization slug format
+    const slugRegex = /^[a-z0-9-]+$/
+    if (!slugRegex.test(form.organization_slug)) {
+      errorMessage.value = 'Organization URL can only contain lowercase letters, numbers, and hyphens'
+      loading.value = false
+      alert('Organization URL can only contain lowercase letters, numbers, and hyphens')
+      return
+    }
+  
+    try {
+      const registrationData = {
+        name: `${form.firstName} ${form.lastName}`,
+        email: form.email,
+        password: form.password,
+        organization_name: form.organization_name,
+        organization_slug: form.organization_slug
+      }
+  
+      const response = await authStore.register(registrationData)
+  
+      // Show success message
+      alert('Registration successful! You can now login with your credentials.')
+      
+      // Navigate to login page
+      navigateTo('/auth/login')
+    } catch (error) {
+      console.error('Registration error:', error)
+      const errorMsg = error.data?.message || error.message || 'Registration failed. Please try again.'
+      errorMessage.value = errorMsg
+      alert(errorMsg)
+    } finally {
+      loading.value = false
+    }
+  }
+  </script>
