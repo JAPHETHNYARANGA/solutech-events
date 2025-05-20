@@ -22,22 +22,44 @@ Both applications live in a single repository for easier development and deploym
 
 ````
 
-##  Quick Start
+
+
+## 🚀 Quick Start
 
 After cloning the repository:
+
+### 🐧 On Linux
 
 ```bash
 git clone https://github.com/JAPHETHNYARANGA/solutech-events.git
 cd solutech-events
-./setup.sh
-````
 
+# 1. Make the scripts executable (only needed once)
+chmod +x setup.sh start.sh
+
+# 2. Run the setup script
+./setup.sh
+🪟 On Windows (WSL/Git Bash)
+bash
+Copy
+Edit
+# 1. Convert line endings to Unix-style (if cloned on Windows)
+dos2unix setup.sh start.sh
+
+# 2. Add execute permission
+chmod +x setup.sh start.sh
+
+# 3. Run the setup script
+./setup.sh
 This will:
 
-* Install backend (Laravel) and frontend (Nuxt) dependencies
-* Set up Laravel `.env` and generate an app key
-* Run database migrations (optional)
-* Start both servers concurrently
+Install backend (Laravel) and frontend (Nuxt) dependencies
+
+Set up Laravel .env and generate an app key
+
+Run database migrations (optional)
+
+Start both servers concurrently
 
 ---
 
