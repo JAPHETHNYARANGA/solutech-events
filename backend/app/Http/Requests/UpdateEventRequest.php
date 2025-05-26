@@ -11,18 +11,18 @@ class UpdateEventRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            //
+            'title' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'venue' => 'sometimes|string|max:255',
+            'date' => 'sometimes|date',
+            'price' => 'sometimes|numeric|min:0',
+            'max_attendees' => 'sometimes|integer|min:1',
         ];
     }
 }

@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
   modules: ['@pinia/nuxt'],
+  plugins: ['~/plugins/init-auth.client.js'],
   vite: {
     plugins: [
       tailwindcss(),

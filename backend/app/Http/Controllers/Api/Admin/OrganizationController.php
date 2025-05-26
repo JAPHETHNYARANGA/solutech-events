@@ -14,17 +14,13 @@ class OrganizationController extends Controller
 
     public function store(StoreOrganizationRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $organization = $this->organizationService->createOrganization($data);
-        
+        $organization = $this->organizationService->createOrganization($request->validated());
         return response()->json($organization, 201);
     }
 
     public function update(UpdateOrganizationRequest $request, string $id): JsonResponse
     {
-        $data = $request->validated();
-        $organization = $this->organizationService->updateOrganization($id, $data);
-        
+        $organization = $this->organizationService->updateOrganization($id, $request->validated());
         return response()->json($organization);
     }
 

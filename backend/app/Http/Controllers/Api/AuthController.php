@@ -3,39 +3,35 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use App\Models\Admin;
 use App\Models\Organization;
+use Illuminate\Http\Request; 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    public function register(RegisterRequest $request): JsonResponse
     {
         try {
-            $data = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:admins,email',
-                'password' => 'required|string',
-                'organization_name' => 'required|string|max:255',
-                'organization_slug' => 'required|string|max:255|alpha_dash|unique:organizations,slug'
-            ]);
+            $validated = $request->validated();
 
             DB::beginTransaction();
 
             // Create organization
             $organization = Organization::create([
-                'name' => $data['organization_name'],
-                'slug' => $data['organization_slug']
+                'name' => $validated['organization_name'],
+                'slug' => $validated['organization_slug']
             ]);
 
             // Create admin
             $admin = Admin::create([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => Hash::make($data['password']),
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
                 'organization_id' => $organization->id
             ]);
 
@@ -57,16 +53,13 @@ class AuthController extends Controller
         }
     }
 
-    public function login(Request $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string'
-        ]);
+        $validated = $request->validated();
 
-        $admin = Admin::where('email', $credentials['email'])->first();
+        $admin = Admin::where('email', $validated['email'])->first();
 
-        if (!$admin || !Hash::check($credentials['password'], $admin->password)) {
+        if (!$admin || !Hash::check($validated['password'], $admin->password)) {
             return response()->json([
                 'message' => 'Invalid credentials'
             ], 401);

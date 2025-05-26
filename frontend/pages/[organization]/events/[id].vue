@@ -183,101 +183,93 @@
   
   
   <script setup>
-import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
-
-const route = useRoute()
-const { organization, id } = route.params
-
-const event = ref(null)
-const loading = ref(true)
-const error = ref(null)
-const registeredAttendees = ref([])
-
-// Modal state
-const showModal = ref(false)
-
-// Form state
-const form = reactive({
-  name: '',
-  email: '',
-  phone: '',
-  agreeTerms: false
-})
-
-const registrationLoading = ref(false)
-const successMessage = ref('')
-const errorMessage = ref('')
-
-
-const { data, error: fetchError } = await useFetch(
-  `http://localhost:8000/api/${organization}/public/events/${id}`
-)
-
-if (fetchError.value) {
-  error.value = fetchError.value
-  console.error('Failed to fetch event details:', fetchError.value)
-} else {
-  event.value = data.value
+  import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
+  import { fetchEventWithAttendees, registerForEvent } from '~/services/eventService'
   
-  // Mock registered attendees (replace with actual API call)
-  registeredAttendees.value = Array.from(
-    { length: Math.floor(Math.random() * event.value.max_attendees) }, 
-    (_, i) => ({
-      id: i + 1,
-      name: `Attendee ${i + 1}`
-    })
-  )
-}
+  const route = useRoute()
+  const { organization, id } = route.params
+  
+  const event = ref(null)
+  const loading = ref(true)
+  const error = ref(null)
+  const registeredAttendees = ref([])
+  
 
-loading.value = false
+  const showModal = ref(false)
+  
 
-
-
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  const form = reactive({
+    name: '',
+    email: '',
+    phone: '',
+    agreeTerms: false
   })
-}
-const router = useRouter()
-const submitRegistration = async () => {
-  registrationLoading.value = true
-  successMessage.value = ''
-  errorMessage.value = ''
   
-  try {
-    const response = await $fetch(`http://localhost:8000/api/${organization}/public/events/${id}/register `, {
-      method: 'POST',
-      body: {
+  const registrationLoading = ref(false)
+  const successMessage = ref('')
+  const errorMessage = ref('')
+  
+  const fetchEventAndAttendees = async () => {
+    try {
+      const { event: eventData, attendees } = await fetchEventWithAttendees(organization, id)
+      
+      event.value = eventData
+      registeredAttendees.value = attendees || []
+  
+      console.log('Attendees:', JSON.parse(JSON.stringify(registeredAttendees.value)))
+    } catch (err) {
+      error.value = err
+      console.error('Failed to fetch event details:', err)
+    } finally {
+      loading.value = false
+    }
+  }
+  
+
+  fetchEventAndAttendees()
+  
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+  
+  const router = useRouter()
+  const submitRegistration = async () => {
+    registrationLoading.value = true
+    successMessage.value = ''
+    errorMessage.value = ''
+    
+    try {
+      const registrationData = {
         name: form.name,
         email: form.email,
         phone: form.phone
       }
-    })
-    
-    successMessage.value = `Thank you for registering! A confirmation has been sent to ${form.email}.`
-    
-    // Reset form after successful submission
-    setTimeout(() => {
-      form.name = ''
-      form.email = ''
-      form.phone = ''
-      form.agreeTerms = false
-      showModal.value = false
-      registeredAttendees.value.push({
-        id: registeredAttendees.value.length + 1,
-        name: form.name
-      })
-      router.push('/')
-    }, 2000)
-  } catch (err) {
-    errorMessage.value = err.data?.message || 'Registration failed. Please try again later.'
-  } finally {
-    registrationLoading.value = false
+      
+      await registerForEvent(organization, id, registrationData)
+      
+      successMessage.value = `Thank you for registering! For this event`
+      
+      setTimeout(() => {
+        form.name = ''
+        form.email = ''
+        form.phone = ''
+        form.agreeTerms = false
+        showModal.value = false
+   
+        fetchEventAndAttendees()
+        router.push('/')
+      }, 2000)
+    } catch (err) {
+      errorMessage.value = err.data?.message || 'Registration failed. Please try again later.'
+    } finally {
+      registrationLoading.value = false
+    }
   }
-}
-</script>
+  </script>

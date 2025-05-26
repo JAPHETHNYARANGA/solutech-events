@@ -311,7 +311,6 @@
       return
     }
   
-    // Validate password strength
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
     if (!passwordRegex.test(form.password)) {
       errorMessage.value = 'Password must be at least 8 characters with uppercase, number, and special character'
@@ -343,7 +342,7 @@
       // Show success message
       alert('Registration successful! You can now login with your credentials.')
       
-      // Navigate to login page
+  
       navigateTo('/auth/login')
     } catch (error) {
       console.error('Registration error:', error)

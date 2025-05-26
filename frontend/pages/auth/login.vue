@@ -151,7 +151,7 @@ const login = async () => {
       password: form.password
     })
 
-    // Check if login was successful and organization slug exists
+
     if (response && authStore.organization?.slug) {
       await navigateTo(`/${authStore.organization.slug}/admin`)
     } else {

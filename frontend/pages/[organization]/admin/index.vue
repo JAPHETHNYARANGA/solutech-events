@@ -394,8 +394,17 @@
     TransitionRoot,
   } from '@headlessui/vue'
   import { CalendarIcon, ArrowPathIcon, UsersIcon } from '@heroicons/vue/24/outline'
-  import { fetchAdminEvents, createEvent, updateEvent, deleteEvent } from '~/services/eventService'
-  import { fetchEventAttendees, deleteAttendee } from '~/services/attendeeService'
+  import { 
+    fetchAdminEvents, 
+    createEvent, 
+    updateEvent, 
+    deleteEvent,
+    fetchEventsWithAttendeeCounts
+  } from '~/services/eventService'
+  import { 
+    fetchEventAttendeesWithAuth,
+    deleteAttendee 
+  } from '~/services/attendeeService'
   
   const organization = ref(null)
   
@@ -450,8 +459,8 @@
           return navigateTo('/auth/login')
         }
   
-        const response = await fetchAdminEvents(orgSlug)
-        events.value = Array.isArray(response.original) ? response.original : []
+        // Use the new service method to fetch events with attendee counts
+        events.value = await fetchEventsWithAttendeeCounts(orgSlug)
       }
     } catch (error) {
       console.error('Failed to fetch events:', error?.message || error)
@@ -512,45 +521,57 @@
   }
   
   const handleSubmit = async () => {
-    isSubmitting.value = true
-  
-    try {
-      if (!organization.value?.slug) {
-        throw new Error('Organization information not available')
-      }
-  
-      // Strip the time part from the date to ensure only the date is sent
-      const eventData = { ...form.value }
-      if (eventData.date) {
-        eventData.date = eventData.date.split('T')[0]  // Extract only the date part (YYYY-MM-DD)
-      }
-  
-      if (modalAction.value === 'create') {
-        const newEvent = await createEvent(organization.value.slug, eventData)
-        if (newEvent) {
-          events.value = [...(events.value || []), newEvent]
-        }
-      } else if (modalAction.value === 'edit' && selectedEvent.value?.id) {
-        const updatedEvent = await updateEvent(
-          organization.value.slug, 
-          selectedEvent.value.id, 
-          eventData
-        )
-        if (updatedEvent) {
-          events.value = (events.value || []).map(e => 
-            e?.id === selectedEvent.value?.id ? updatedEvent : e
-          )
-        }
-      }
-  
-      closeModal()
-    } catch (error) {
-      console.error('Failed to save event:', error)
-      alert(`Failed to save event: ${error.message}`)
-    } finally {
-      isSubmitting.value = false
+  isSubmitting.value = true
+
+  try {
+    if (!organization.value?.slug) {
+      throw new Error('Organization information not available')
     }
+
+    const eventData = { ...form.value }
+    if (eventData.date) {
+      eventData.date = eventData.date.split('T')[0]  // Extract only the date part (YYYY-MM-DD)
+    }
+
+    if (modalAction.value === 'create') {
+      const newEvent = await createEvent(organization.value.slug, eventData)
+      if (newEvent) {
+     
+        await refreshEvents()
+      }
+    } else if (modalAction.value === 'edit' && selectedEvent.value?.id) {
+      const updatedEvent = await updateEvent(
+        organization.value.slug, 
+        selectedEvent.value.id, 
+        eventData
+      )
+      if (updatedEvent) {
+        
+        await refreshEvents()
+      }
+    }
+
+    closeModal()
+  } catch (error) {
+    console.error('Failed to save event:', error)
+    alert(`Failed to save event: ${error.message}`)
+  } finally {
+    isSubmitting.value = false
   }
+}
+
+//  function to refresh events
+const refreshEvents = async () => {
+  loading.value = true
+  try {
+    events.value = await fetchEventsWithAttendeeCounts(organization.value.slug)
+  } catch (error) {
+    console.error('Failed to refresh events:', error)
+    alert('Failed to refresh events list')
+  } finally {
+    loading.value = false
+  }
+}
   
   const handleDelete = async () => {
     isSubmitting.value = true
@@ -578,11 +599,25 @@
     attendeesLoading.value = true
     
     try {
-      const response = await fetchEventAttendees(organization.value.slug, event.id)
-      attendees.value = response.original || response || []
+      attendees.value = await fetchEventAttendeesWithAuth(
+        organization.value.slug, 
+        event.id
+      )
+      
+      // updated attendees_count in the events array
+      events.value = events.value.map(e => {
+        if (e.id === event.id) {
+          return {
+            ...e,
+            attendees_count: attendees.value.length
+          }
+        }
+        return e
+      })
     } catch (error) {
       console.error('Error fetching attendees:', error)
       attendees.value = []
+      alert('Failed to fetch attendees. Please try again.')
     } finally {
       attendeesLoading.value = false
     }
@@ -596,7 +631,12 @@
   const confirmDeleteAttendee = async (attendee) => {
     if (confirm(`Are you sure you want to remove ${attendee.name} from this event?`)) {
       try {
-        await deleteAttendee(organization.value.slug, selectedEvent.value.id, attendee.id)
+        await deleteAttendee(
+          organization.value.slug, 
+          selectedEvent.value.id, 
+          attendee.id
+        )
+        
         attendees.value = attendees.value.filter(a => a.id !== attendee.id)
       } catch (error) {
         console.error('Error deleting attendee:', error)

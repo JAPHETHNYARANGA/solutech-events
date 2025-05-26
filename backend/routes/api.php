@@ -1,11 +1,9 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\Public\EventController;
 
-// api.php
+
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
@@ -16,6 +14,7 @@ Route::prefix('auth')->group(function () {
 // Public routes available on central domain
 Route::prefix('public')->group(function () {
     Route::get('events', [\App\Http\Controllers\Api\Public\EventController::class, 'index']);
+    Route::get('organizations', [\App\Http\Controllers\Api\Public\OrganizationController::class, 'index']);
 });
 
 // Tenant routes (will be prefixed with organization slug)
@@ -33,7 +32,10 @@ Route::prefix('{organization}')->group(function () {
 
     Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
         Route::apiResource('events', \App\Http\Controllers\Api\Admin\EventController::class);
-        Route::apiResource('events.attendees', \App\Http\Controllers\Api\Admin\AttendeeController::class)
-            ->only(['index', 'show', 'destroy']);
+    });
+    Route::prefix('events/{eventId}/attendees')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\Admin\AttendeeController::class, 'index']);
+        Route::get('{id}', [\App\Http\Controllers\Api\Admin\AttendeeController::class, 'show']);
+        Route::delete('{id}', [\App\Http\Controllers\Api\Admin\AttendeeController::class, 'destroy']);
     });
 });

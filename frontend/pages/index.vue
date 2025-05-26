@@ -1,11 +1,8 @@
 <template>
     <div class="min-h-screen bg-gray-50">
-      <!-- Header -->
       <Navbar />
       
-      <!-- Main Content -->
       <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- Organization Selector -->
         <div class="mb-8 bg-white p-6 rounded-lg shadow">
           <label for="organization" class="block text-sm font-medium text-gray-700">Select Organization</label>
           <select 
@@ -19,7 +16,6 @@
           </select>
         </div>
   
-        <!-- Events Grid -->
         <div v-if="loading" class="flex justify-center items-center h-64">
           <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
         </div>
@@ -81,24 +77,21 @@
   const filteredEvents = ref([])
   const organizations = ref([])
   
-  // Fetch events using useFetch (works in SSR & CSR)
-  const { data: eventsData, error } = await useFetch('http://127.0.0.1:8000/api/public/events')
+  // Fetch events and organizations in parallel
+  const { data: eventsData, error: eventsError } = await useFetch('http://127.0.0.1:8000/api/public/events')
+  const { data: orgsData, error: orgsError } = await useFetch('http://127.0.0.1:8000/api/public/organizations')
   
-  if (error.value) {
-    console.error('Failed to fetch events:', error.value)
-  } else if (Array.isArray(eventsData.value)) {
-    allEvents.value = eventsData.value
-    filteredEvents.value = [...eventsData.value]
-    
-    // Extract unique organizations
-    organizations.value = eventsData.value.reduce((acc, event) => {
-      if (!acc.some(org => org.id === event.organization.id)) {
-        acc.push(event.organization)
-      }
-      return acc
-    }, [])
+  if (eventsError.value || orgsError.value) {
+    console.error('Failed to fetch data:', eventsError.value || orgsError.value)
   } else {
-    console.error('Unexpected API response: expected an array')
+    if (Array.isArray(eventsData.value)) {
+      allEvents.value = eventsData.value
+      filteredEvents.value = [...eventsData.value]
+    }
+    
+    if (Array.isArray(orgsData.value)) {
+      organizations.value = orgsData.value
+    }
   }
   
   loading.value = false
@@ -120,3 +113,4 @@
     }
   }
   </script>
+  
