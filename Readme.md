@@ -128,8 +128,12 @@ Press `Ctrl + C` to stop both.
 
 ---
 
-## Documentation
-`https://documenter.getpostman.com/view/43297683/2sB2qdeygw#d101ab7a-b1fb-4a19-8db8-a2e4783be072`
+## Api Documentation
+
+Click on the below link to get the API documentation:
+
+[API Documentation](https://documenter.getpostman.com/view/43297683/2sB2qdeygw#d101ab7a-b1fb-4a19-8db8-a2e4783be072)
+
 
 ## 📸 Screenshots
 
