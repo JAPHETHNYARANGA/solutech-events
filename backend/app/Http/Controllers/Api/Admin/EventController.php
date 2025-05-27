@@ -26,26 +26,13 @@ class EventController extends Controller
 
     public function store(StoreEventRequest $request, string $organizationSlug): JsonResponse
     {
-        Log::info('Event creation request received.', [
-            'organization' => $organizationSlug,
-            'request_data' => $request->validated(), // Ensure no sensitive data is logged
-        ]);
 
         try {
             $event = $this->eventService->createEvent($organizationSlug, $request->validated());
 
-            Log::info('Event created successfully.', [
-                'event_id' => $event->id ?? null,
-                'organization' => $organizationSlug
-            ]);
-
             return response()->json($event, 201);
         } catch (\Throwable $e) {
-            Log::error('Failed to create event.', [
-                'organization' => $organizationSlug,
-                'error_message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+       
 
             return response()->json(['message' => 'Failed to create event'], 500);
         }
